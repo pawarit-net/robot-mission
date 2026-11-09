@@ -283,6 +283,21 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .pilot input.need{animation:needp .5s ease-in-out 2;border-color:var(--amber)}
 @keyframes needp{50%{box-shadow:0 0 0 4px rgba(255,185,56,.55)}}
 
+.pilot input+.namehint+label{margin-top:2px}
+.tab.off{opacity:.45;cursor:not-allowed}
+.lb .rm{color:var(--mute);font-weight:400;font-size:13px;margin-left:4px}
+#soundBtn .sl{font-size:14px}
+
+.lvl.locked{opacity:.5;cursor:not-allowed;background:rgba(255,255,255,.03)}
+.lvl.locked:hover{transform:none;border-color:var(--line);background:rgba(255,255,255,.03)}
+.lvl .lk{width:16px;height:16px;color:var(--mute)}
+.lvl.next{border-color:var(--tc);box-shadow:0 0 0 0 var(--tc);animation:nextp 1.6s ease-in-out infinite}
+@keyframes nextp{50%{box-shadow:0 0 14px 2px var(--tc)}}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);opacity:0;pointer-events:none;z-index:70;background:#0E1650;border:2px solid var(--amber);color:var(--ink);padding:10px 18px;border-radius:14px;font-size:16px;max-width:min(92vw,560px);text-align:center;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.chk{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:15px;color:var(--ink);text-align:left}
+.chk input{width:18px;height:18px}
+
 </style>
 </head>
 <body>
@@ -349,6 +364,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
       <label for="playerName">ชื่อนักบิน</label>
       <input id="playerName" type="text" maxlength="30" placeholder="พิมพ์ชื่อของคุณ" autocomplete="off">
       <div id="nameHint" class="namehint" aria-live="polite"></div>
+      <label for="playerRoom">ห้อง/ชั้น</label>
+      <input id="playerRoom" type="text" maxlength="12" placeholder="เช่น ป.5/1 หรือ ม.6/12" autocomplete="off">
       <div class="tot"><span id="totIcon"></span><span id="totStars">0</span> ดาว</div>
       <button id="boardBtn" class="btn" type="button">ตารางคะแนน</button>
       <button id="newPlayerBtn" class="btn" type="button">เปลี่ยนผู้เล่น</button>
@@ -363,7 +380,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
     <button id="backBtn" class="btn" type="button"></button>
     <h2 id="lvTitle"></h2>
     <span id="lvChip" class="chip"></span>
-    <button id="soundBtn" class="btn icon" type="button" aria-label="เปิดปิดเสียง"></button>
+    <button id="soundBtn" class="btn" type="button" aria-label="เปิดปิดเสียง"></button>
   </div>
   <div class="main">
     <div class="card boardcard">
@@ -398,6 +415,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
   </div>
 </section>
 
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modal" class="hidden"></div>
 <canvas id="fx"></canvas>
 <script>
@@ -1185,10 +1203,10 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
 
   /* ---------- สถานะ ---------- */
   var KEY = 'robotMission.v1';
-  var store = { name: '', stars: {}, url: '', queue: [], machine: '' };
-  // ชื่อและดาวไม่ถูกจำข้ามการรีเฟรช: ทุกครั้งที่เปิด/รีหน้า คือผู้เล่นคนใหม่ (จำเฉพาะค่าตั้งค่า คิวส่งคะแนน และรหัสเครื่อง)
-  try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && typeof o === 'object') { store.url = o.url || ''; store.queue = Array.isArray(o.queue) ? o.queue : []; store.machine = o.machine || ''; } } } catch (e) { }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify({ url: store.url, queue: store.queue, machine: store.machine })); } catch (e) { } }
+  var store = { name: '', room: '', stars: {}, url: '', queue: [], machine: '', players: {}, unlockAll: false, loaded: '' };
+  // ชื่อและดาวไม่ถูกจำข้ามการรีเฟรช: ทุกครั้งที่เปิด/รีหน้า คือผู้เล่นคนใหม่ (จำเฉพาะค่าตั้งค่า คิวส่งคะแนน รหัสเครื่อง และห้องล่าสุด)
+  try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && typeof o === 'object') { store.url = o.url || ''; store.queue = Array.isArray(o.queue) ? o.queue : []; store.machine = o.machine || ''; store.room = String(o.room || '').slice(0, 12); store.players = (o.players && typeof o.players === 'object') ? o.players : {}; store.unlockAll = !!o.unlockAll; } } } catch (e) { }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ url: store.url, queue: store.queue, machine: store.machine, room: store.room, players: store.players, unlockAll: store.unlockAll })); } catch (e) { } }
 
   var cur = {
     tier: null, idx: 0, level: null, program: [], active: null, history: [], map: null, maps: null, par: 0,
@@ -1198,6 +1216,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   /* ---------- ส่งคะแนนไป Google Sheets ---------- */
   var CFG = window.ROBOT_CONFIG || {};
   function scoreUrl() { return String(store.url || CFG.scoreUrl || '').trim(); }
+  function roomNorm(r) { return String(r || '').replace(/\s+/g, ' ').trim().slice(0, 12); }
   function machineId() { if (!store.machine) { store.machine = 'm' + Math.random().toString(36).slice(2, 8); save(); } return store.machine; }
   var flushing = false;
   function updateSync() {
@@ -1216,7 +1235,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   }
   function submitScore(lv, n, blocks) {
     if (!scoreUrl()) return;
-    store.queue.push({ name: store.name || 'ไม่ระบุชื่อ', tier: cur.tier, level: lv.id, no: cur.idx + 1, stars: n, blocks: blocks, machine: machineId() });
+    store.queue.push({ name: store.name || 'ไม่ระบุชื่อ', room: roomNorm(store.room), tier: cur.tier, level: lv.id, no: cur.idx + 1, stars: n, blocks: blocks, machine: machineId() });
     if (store.queue.length > 200) store.queue.shift();
     save(); flush();
   }
@@ -1224,7 +1243,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   setInterval(flush, 60000);
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var boardTab = 'easy', boardData = null, boardTimer = null;
+  var boardTab = 'easy', boardData = null, boardTimer = null, boardScope = 'all';
   var TAB_NAMES = [['easy', 'ง่าย (ประถม)'], ['medium', 'กลาง (ม.ต้น)'], ['hard', 'ยาก (ม.ปลาย)'], ['all', 'รวมทุกระดับ']];
   function maxStarsOf(tab) {
     if (tab === 'all') return maxStars();
@@ -1238,44 +1257,58 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       b.onclick = function () { boardTab = t[0]; renderBoardTable(); };
       tabs.appendChild(b);
     });
+    var sc = $('lbScope'); sc.innerHTML = '';
+    var room = roomNorm(store.room);
+    [['room', room ? 'ห้อง ' + room : 'ห้องของฉัน'], ['all', 'ทั้งโรงเรียน']].forEach(function (t) {
+      var b = h('button', 'tab' + (t[0] === boardScope ? ' on' : ''), esc(t[1])); b.type = 'button';
+      if (t[0] === 'room' && !room) { b.disabled = true; b.title = 'ใส่ห้องที่หน้าเมนูก่อน'; b.classList.add('off'); }
+      b.onclick = function () { if (boardScope === t[0]) return; boardScope = t[0]; boardData = null; renderBoardTable(); loadBoard(); };
+      sc.appendChild(b);
+    });
     if (!boardData) { body.innerHTML = '<p>กำลังโหลด…</p>'; return; }
     var list = Array.isArray(boardData) ? boardData : (boardData[boardTab] || []);
     if (!list.length) { body.innerHTML = '<p>ยังไม่มีใครส่งคะแนนในหมวดนี้</p>'; return; }
-    var mx = maxStarsOf(boardTab);
+    var mx = maxStarsOf(boardTab), mine = store.name.trim();
     var t = '<table class="lb"><thead><tr><th>อันดับ</th><th>ชื่อ</th><th>ดาว</th><th>ผ่านแล้ว</th></tr></thead><tbody>';
     list.slice(0, 10).forEach(function (r, i) {
-      var cls = (i === 0 ? 'top ' : '') + (store.name && r.name === store.name ? 'me' : '');
+      var me = mine && r.name === mine && (!r.room || roomNorm(r.room) === room);
+      var cls = (i === 0 ? 'top ' : '') + (me ? 'me' : '');
       var rank = i < 3 ? '<span class="medal m' + (i + 1) + '">' + (i + 1) + '</span>' : (i + 1);
-      t += '<tr class="' + cls + '"><td>' + rank + '</td><td>' + esc(r.name) + '</td><td>' + r.stars + ' / ' + mx + '</td><td>' + r.cleared + ' ด่าน</td></tr>';
+      var tag = boardScope === 'all' && r.room ? ' <small class="rm">' + esc(r.room) + '</small>' : '';
+      t += '<tr class="' + cls + '"><td>' + rank + '</td><td>' + esc(r.name) + tag + '</td><td>' + r.stars + ' / ' + mx + '</td><td>' + r.cleared + ' ด่าน</td></tr>';
     });
     body.innerHTML = t + '</tbody></table>';
   }
   function loadBoard() {
     var u = scoreUrl(); if (!u || typeof fetch !== 'function') return;
-    fetch(u + (u.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now()).then(function (r) { return r.json(); }).then(function (data) {
+    var url = u + (u.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+    if (boardScope === 'room' && roomNorm(store.room)) url += '&room=' + encodeURIComponent(roomNorm(store.room));
+    var scopeAtStart = boardScope;
+    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+      if (scopeAtStart !== boardScope) return;
       boardData = data; renderBoardTable();
     }).catch(function () { if (!boardData && $('boardBody')) $('boardBody').innerHTML = '<p>ดึงตารางไม่สำเร็จ ตรวจอินเทอร์เน็ตหรือ URL ที่ตั้งไว้นะ</p>'; });
   }
   function showBoard() {
     var m = $('modal'); m.classList.remove('hidden');
-    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><div class="mtop"><button class="btn mclose" type="button">← กลับ</button><h3>ตารางคะแนน</h3><button class="btn icon mclose" type="button" aria-label="ปิด">×</button></div><div class="tabs" id="lbTabs"></div><div id="boardBody"></div><div class="macts"><button class="btn" id="boardClose">ปิด</button></div></div>';
+    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><div class="mtop"><button class="btn mclose" type="button">← กลับ</button><h3>ตารางคะแนน</h3><button class="btn icon mclose" type="button" aria-label="ปิด">×</button></div><div class="tabs" id="lbScope"></div><div class="tabs" id="lbTabs"></div><div id="boardBody"></div><div class="macts"><button class="btn" id="boardClose">ปิด</button></div></div>';
     $('boardClose').onclick = closeModal; bindClose(m); $('boardClose').focus();
-    boardData = null; boardTab = cur.tier || 'easy';
+    boardData = null; boardTab = cur.tier || 'easy'; boardScope = roomNorm(store.room) ? 'room' : 'all';
     if (!scoreUrl()) { $('boardBody').innerHTML = '<p>ยังไม่ได้เชื่อมตารางคะแนนรวม ให้ครูตั้งค่าที่ลิงก์ “ตั้งค่าสำหรับครู” ด้านล่างหน้าเมนู</p>'; return; }
     renderBoardTable(); loadBoard();
     clearInterval(boardTimer); boardTimer = setInterval(function () { if ($('boardBody')) loadBoard(); else clearInterval(boardTimer); }, 20000);
   }
   function showConfig() {
     var m = $('modal'); m.classList.remove('hidden');
-    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><h3>ตั้งค่าสำหรับครู</h3><p>วาง URL ของ Web App จาก Google Apps Script</p><input id="cfgUrl" class="cfg" type="url" placeholder="https://script.google.com/macros/s/…/exec"><p id="cfgNote"></p><div class="macts"><button class="btn primary" id="cfgSave">บันทึก</button><button class="btn" id="cfgClose">ยกเลิก</button></div></div>';
-    $('cfgUrl').value = store.url || CFG.scoreUrl || '';
+    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><h3>ตั้งค่าสำหรับครู</h3><p>วาง URL ของ Web App จาก Google Apps Script</p><input id="cfgUrl" class="cfg" type="url" placeholder="https://script.google.com/macros/s/…/exec"><label class="chk"><input type="checkbox" id="cfgUnlock"> ปลดล็อกทุกด่านในเครื่องนี้ (สำหรับครูสาธิต/ทดสอบ)</label><p id="cfgNote"></p><div class="macts"><button class="btn primary" id="cfgSave">บันทึก</button><button class="btn" id="cfgClose">ยกเลิก</button></div></div>';
+    $('cfgUrl').value = store.url || CFG.scoreUrl || ''; $('cfgUnlock').checked = !!store.unlockAll;
     $('cfgClose').onclick = closeModal;
-    $('cfgSave').onclick = function () { store.url = $('cfgUrl').value.trim(); save(); updateSync(); flush(); closeModal(); };
+    $('cfgSave').onclick = function () { store.url = $('cfgUrl').value.trim(); store.unlockAll = $('cfgUnlock').checked; save(); updateSync(); flush(); closeModal(); renderHome(); };
     $('cfgUrl').focus();
   }
 
   /* ---------- เสียง ---------- */
-  var actx = null, soundOn = true;
+  var actx = null, soundOn = false; // ปิดเสียงเป็นค่าเริ่มต้น (ห้องมีหลายเครื่องเล่นพร้อมกัน)
   function audio() {
     if (!soundOn) return null;
     if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { soundOn = false; return null; } }
@@ -1315,17 +1348,66 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   function maxStars() { var n = 0; ['easy', 'medium', 'hard'].forEach(function (t) { n += C.LEVELS[t].length * 3; }); return n; }
 
   var nameWarned = false;
+
+  /* ความคืบหน้าแยกตามชื่อ+ห้อง (จำในเครื่อง และดึงจาก Google Sheet ถ้าเชื่อมไว้) */
+  function playerKey() {
+    var n = store.name.trim().toLowerCase().replace(/\s+/g, ' ');
+    return n ? roomNorm(store.room).replace(/\s+/g, '').toLowerCase() + '|' + n : '';
+  }
+  function persistStars() {
+    var k = playerKey(); if (!k) return;
+    delete store.players[k]; store.players[k] = JSON.parse(JSON.stringify(store.stars)); // ย้ายไปท้ายสุด = ใช้ล่าสุด
+    var keys = Object.keys(store.players); while (keys.length > 300) delete store.players[keys.shift()];
+    save();
+  }
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.classList.remove('show'); }, 3200);
+  }
+  function loadPlayer() {
+    var k = playerKey(); store.loaded = k; store.stars = {};
+    if (k && store.players[k]) for (var id in store.players[k]) store.stars[id] = store.players[k][id];
+    renderHome();
+    if (k) fetchProgress(k);
+  }
+  function fetchProgress(k) {
+    var u = scoreUrl(); if (!u || typeof fetch !== 'function') return;
+    var url = u + (u.indexOf('?') >= 0 ? '&' : '?') + 'action=progress&name=' + encodeURIComponent(store.name.trim()) + '&room=' + encodeURIComponent(roomNorm(store.room)) + '&t=' + Date.now();
+    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+      if (playerKey() !== k || !data || typeof data !== 'object') return;
+      var changed = false;
+      Object.keys(data).forEach(function (id) { var v = Number(data[id]) || 0; if (v > (store.stars[id] || 0)) { store.stars[id] = v; changed = true; } });
+      if (changed) { persistStars(); renderHome(); toast('โหลดความคืบหน้าของ ' + store.name.trim() + ' แล้ว'); }
+    }).catch(function () { /* ออฟไลน์: ใช้ที่จำในเครื่อง */ });
+  }
+  function isUnlocked(tier, i) {
+    if (store.unlockAll || i === 0) return true;
+    var list = C.LEVELS[tier];
+    if ((store.stars[list[i].id] || 0) >= 1) return true;
+    if ((store.stars[list[i - 1].id] || 0) >= 1) return true;
+    return i >= 2 && (store.stars[list[i - 2].id] || 0) === 3; // 3 ดาว = ข้ามได้ 1 ด่าน
+  }
+  function firstOpenIndex(tier) {
+    var list = C.LEVELS[tier];
+    for (var i = 0; i < list.length; i++) if ((store.stars[list[i].id] || 0) < 1 && isUnlocked(tier, i)) return i;
+    return -1;
+  }
+
   function tryStart(key, i) {
+    if (playerKey() !== store.loaded) loadPlayer();
     if (!store.name.trim() && !nameWarned) {
       nameWarned = true;
       var hint = $('nameHint'); hint.textContent = 'พิมพ์ชื่อก่อนนะ ถ้าไม่ใส่ชื่อ คะแนนจะไม่ขึ้นตารางอันดับ (กดเลือกด่านอีกครั้งเพื่อเล่นโดยไม่ใส่ชื่อ)';
       var inp = $('playerName'); inp.classList.remove('need'); void inp.offsetWidth; inp.classList.add('need'); inp.focus();
       return;
     }
+    if (!isUnlocked(key, i)) {
+      toast('ด่านนี้ยังล็อกอยู่ ผ่านด่าน ' + i + ' ก่อนนะ (ได้ 3 ดาวในด่านก่อนหน้านั้นจะข้ามด่านได้)'); playSfx('crash'); return;
+    }
     startLevel(key, i);
   }
   function newPlayer() {
-    store.name = ''; store.stars = {}; nameWarned = false;
+    store.name = ''; store.loaded = ''; store.stars = {}; nameWarned = false;
     renderHome(); $('nameHint').textContent = ''; $('playerName').focus();
   }
 
@@ -1335,9 +1417,14 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       var meta = C.TIERS[key], card = h('article', 'tier tier-' + key);
       card.innerHTML = '<span class="chip">' + meta.grade + '</span><h2>' + meta.name + '</h2><p>' + meta.desc + '</p><div class="skills">ฝึก: ' + meta.skills + '</div>';
       var grid = h('div', 'lvls');
+      var openIdx = firstOpenIndex(key);
       C.LEVELS[key].forEach(function (lv, i) {
-        var b = h('button', 'lvl', '<span class="n">' + (i + 1) + '</span><span class="s">' + starRow(store.stars[lv.id] || 0) + '</span>');
-        b.title = lv.title; b.setAttribute('aria-label', 'ด่าน ' + (i + 1) + ' ' + lv.title);
+        var locked = !isUnlocked(key, i), done = (store.stars[lv.id] || 0) >= 1;
+        var lockSvg = '<svg viewBox="0 0 24 24" class="lk" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+        var b = h('button', 'lvl' + (locked ? ' locked' : '') + (i === openIdx ? ' next' : ''), '<span class="n">' + (i + 1) + '</span><span class="s">' + (locked ? lockSvg : starRow(store.stars[lv.id] || 0)) + '</span>');
+        b.title = locked ? 'ล็อก: ผ่านด่าน ' + i + ' ก่อน' : lv.title;
+        b.setAttribute('aria-label', 'ด่าน ' + (i + 1) + ' ' + lv.title + (locked ? ' (ล็อก)' : done ? ' (ผ่านแล้ว)' : ''));
+        if (locked) b.setAttribute('aria-disabled', 'true');
         b.onclick = function () { audio(); playSfx('click'); tryStart(key, i); };
         grid.appendChild(b);
       });
@@ -1346,7 +1433,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       wrap.appendChild(card);
     });
     $('totStars').textContent = totalStars() + ' / ' + maxStars();
-    $('playerName').value = store.name; if (store.name.trim()) $('nameHint').textContent = '';
+    $('playerName').value = store.name; $('playerRoom').value = store.room; if (store.name.trim()) $('nameHint').textContent = '';
   }
 
   /* ---------- เริ่มด่าน ---------- */
@@ -1823,7 +1910,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       }
     }
     var n = C.stars(blocks, cur.par, cur.tier), prev = store.stars[lv.id] || 0;
-    if (n > prev) { store.stars[lv.id] = n; save(); submitScore(lv, n, blocks); }
+    if (n > prev) { store.stars[lv.id] = n; persistStars(); submitScore(lv, n, blocks); }
     playSfx('win');
     var body = cur.robotEl.querySelector('.rbody'); body.classList.add('hop');
     if (cur.goalEl) cur.goalEl.classList.add('launch');
@@ -1852,6 +1939,11 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       var nb = h('button', 'btn primary', hasNext ? 'ด่านถัดไป' : 'ไปด่านที่ยากขึ้น');
       nb.onclick = function () { if (hasNext) startLevel(cur.tier, cur.idx + 1); else startLevel(nextTier, 0); };
       acts.appendChild(nb);
+    }
+    if (n === 3 && cur.idx + 2 < list.length) {
+      var skipTo = cur.idx + 2, sb = h('button', 'btn', 'ข้ามไปด่าน ' + (skipTo + 1) + ' (ได้ 3 ดาว)');
+      sb.onclick = function () { startLevel(cur.tier, skipTo); };
+      acts.appendChild(sb);
     }
     var again = h('button', 'btn', n < 3 ? 'ปรับโปรแกรมให้สั้นลง' : 'ดูอีกรอบ'); again.onclick = function () { closeModal(); resetBoardOnly(); };
     var menu = h('button', 'btn', 'กลับเมนู'); menu.onclick = goHome;
@@ -2054,11 +2146,13 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     $('hintText').textContent = 'ใบ้ ' + (cur.hintIdx + 1) + '/' + hs.length + ': ' + hs[cur.hintIdx];
     cur.hintIdx = (cur.hintIdx + 1) % hs.length;
   };
-  $('soundBtn').onclick = function () {
-    soundOn = !soundOn; $('soundBtn').innerHTML = ic(soundOn ? 'sound' : 'mute'); if (soundOn) { audio(); playSfx('click'); }
-  };
+  function paintSound() { $('soundBtn').innerHTML = ic(soundOn ? 'sound' : 'mute') + ' <span class="sl">' + (soundOn ? 'เสียงเปิด' : 'เสียงปิด') + '</span>'; $('soundBtn').title = soundOn ? 'ปิดเสียง' : 'เปิดเสียง'; }
+  $('soundBtn').onclick = function () { soundOn = !soundOn; paintSound(); if (soundOn) { audio(); playSfx('click'); } };
   $('playerName').addEventListener('input', function (e) { store.name = e.target.value.slice(0, 30); if (store.name.trim()) $('nameHint').textContent = ''; });
   $('newPlayerBtn').onclick = newPlayer;
+  $('playerName').addEventListener('change', loadPlayer);
+  $('playerRoom').addEventListener('change', loadPlayer);
+  $('playerRoom').addEventListener('input', function (e) { store.room = e.target.value.slice(0, 12); save(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) closeModal(); });
   $('progWrap').addEventListener('click', function (e) {
     if (cur.running) return;
@@ -2073,13 +2167,13 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   $('shuffleBtn').innerHTML = ic('shuffle') + ' สุ่มแผนที่ใหม่';
   $('hintBtn').innerHTML = ic('bulb') + ' ใบ้';
   $('labBtn').innerHTML = ic('q') + ' วิธีใช้เงื่อนไข';
-  $('soundBtn').innerHTML = ic('sound');
+  paintSound();
   $('totIcon').innerHTML = starSvg(true);
 
   renderHome(); showScreen('home'); updateSync(); flush();
 
   // สำหรับทดสอบ
-  window.__game = { lab: lab, showLab: showLab, cur: cur, startLevel: startLevel, addTool: addTool, runProgram: runProgram, store: store };
+  window.__game = { isUnlocked: isUnlocked, loadPlayer: loadPlayer, lab: lab, showLab: showLab, cur: cur, startLevel: startLevel, addTool: addTool, runProgram: runProgram, store: store };
 })();
 
 </script>
