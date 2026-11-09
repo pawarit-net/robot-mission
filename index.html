@@ -268,6 +268,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 #labMsg{margin-top:8px;min-height:44px;font-size:15px;color:var(--ink)}
 @media (max-width:820px){.labgrid{grid-template-columns:1fr}}
 
+.mbox.wide,.mbox.lab{max-height:94vh;overflow:auto;padding-top:0}
+.mtop{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;padding:14px 0 10px;background:linear-gradient(180deg,#1B2580 82%,rgba(27,37,128,0))}
+.mtop h3{flex:1;margin:0;text-align:center;font-size:26px}
+.mtop .btn{padding:7px 14px;font-size:16px}
+.mtop .btn.icon{font-size:24px;line-height:1;padding:4px 14px}
+@media (max-height:720px){
+  .lb{font-size:15px}.lb td,.lb th{padding:3px 8px}.lb tr.top td{font-size:17px}
+  .medal{width:26px;height:26px}.tabs{margin:4px 0}
+}
+
 </style>
 </head>
 <body>
@@ -1198,8 +1208,8 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   }
   function showBoard() {
     var m = $('modal'); m.classList.remove('hidden');
-    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><h3>ตารางคะแนน</h3><div class="tabs" id="lbTabs"></div><div id="boardBody"></div><div class="macts"><button class="btn" id="boardClose">ปิด</button></div></div>';
-    $('boardClose').onclick = closeModal; $('boardClose').focus();
+    m.innerHTML = '<div class="mbox wide" role="dialog" aria-modal="true"><div class="mtop"><button class="btn mclose" type="button">← กลับ</button><h3>ตารางคะแนน</h3><button class="btn icon mclose" type="button" aria-label="ปิด">×</button></div><div class="tabs" id="lbTabs"></div><div id="boardBody"></div><div class="macts"><button class="btn" id="boardClose">ปิด</button></div></div>';
+    $('boardClose').onclick = closeModal; bindClose(m); $('boardClose').focus();
     boardData = null; boardTab = cur.tier || 'easy';
     if (!scoreUrl()) { $('boardBody').innerHTML = '<p>ยังไม่ได้เชื่อมตารางคะแนนรวม ให้ครูตั้งค่าที่ลิงก์ “ตั้งค่าสำหรับครู” ด้านล่างหน้าเมนู</p>'; return; }
     renderBoardTable(); loadBoard();
@@ -1758,7 +1768,11 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   }
 
   /* ---------- หน้าต่างผลลัพธ์ ---------- */
-  function closeModal() { lab.token++; lab.busy = false; clearInterval(boardTimer); $('modal').classList.add('hidden'); $('modal').innerHTML = ''; }
+  function bindClose(m) {
+    var bs = m.querySelectorAll('.mclose'); for (var i = 0; i < bs.length; i++) bs[i].onclick = closeModal;
+    m.onclick = function (e) { if (e.target === m) closeModal(); };
+  }
+  function closeModal() { lab.token++; lab.busy = false; clearInterval(boardTimer); $('modal').classList.add('hidden'); $('modal').innerHTML = ''; $('modal').onclick = null; }
   function showWin(n, blocks) {
     var tiers = ['easy', 'medium', 'hard'], list = C.LEVELS[cur.tier], hasNext = cur.idx + 1 < list.length, nextTier = null;
     if (!hasNext) { var ti = tiers.indexOf(cur.tier); if (ti < 2) nextTier = tiers[ti + 1]; }
@@ -1938,7 +1952,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   }
   function showLab() {
     var m = $('modal'); m.classList.remove('hidden');
-    m.innerHTML = '<div class="mbox lab" role="dialog" aria-modal="true"><h3>ห้องทดลองเงื่อนไข</h3>' +
+    m.innerHTML = '<div class="mbox lab" role="dialog" aria-modal="true"><div class="mtop"><button class="btn mclose" type="button">← กลับ</button><h3>ห้องทดลองเงื่อนไข</h3><button class="btn icon mclose" type="button" aria-label="ปิด">×</button></div>' +
       '<p class="sub">สั่งโบโบ้ด้วยปุ่ม แล้วดูว่าเงื่อนไขแต่ละอันเปลี่ยนเป็น จริง หรือ เท็จ</p>' +
       '<div class="labgrid"><div><div id="labHost"><div id="labBoard"></div></div>' +
       '<div class="labctl"><button class="btn" id="lbF" type="button">เดินหน้า</button><button class="btn" id="lbL" type="button">เลี้ยวซ้าย</button><button class="btn" id="lbR" type="button">เลี้ยวขวา</button><button class="btn" id="lbX" type="button">เริ่มใหม่</button></div></div>' +
@@ -1957,7 +1971,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     LAB_PRESETS.forEach(function (p) { var b = h('button', 'btn', esc(p.name)); b.type = 'button'; b.title = p.desc; b.onclick = function () { labRun(p); }; pre.appendChild(b); });
     $('lbF').onclick = function () { labDo('fwd'); }; $('lbL').onclick = function () { labDo('left'); }; $('lbR').onclick = function () { labDo('right'); };
     $('lbX').onclick = function () { lab.token++; lab.busy = false; $('labCode').innerHTML = ''; $('labMsg').textContent = ''; labBuild(); };
-    $('labClose').onclick = closeModal; $('labClose').focus();
+    $('labClose').onclick = closeModal; bindClose(m); $('labClose').focus();
     lab.token++; lab.busy = false; lab.sel = 'frontClear'; labBuild();
   }
 
