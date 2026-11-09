@@ -278,6 +278,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
   .medal{width:26px;height:26px}.tabs{margin:4px 0}
 }
 
+.namehint{font-size:13px;color:var(--amber);max-width:260px;line-height:1.35}
+.namehint:empty{display:none}
+.pilot input.need{animation:needp .5s ease-in-out 2;border-color:var(--amber)}
+@keyframes needp{50%{box-shadow:0 0 0 4px rgba(255,185,56,.55)}}
+
 </style>
 </head>
 <body>
@@ -343,8 +348,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
     <div class="pilot">
       <label for="playerName">ชื่อนักบิน</label>
       <input id="playerName" type="text" maxlength="30" placeholder="พิมพ์ชื่อของคุณ" autocomplete="off">
+      <div id="nameHint" class="namehint" aria-live="polite"></div>
       <div class="tot"><span id="totIcon"></span><span id="totStars">0</span> ดาว</div>
       <button id="boardBtn" class="btn" type="button">ตารางคะแนน</button>
+      <button id="newPlayerBtn" class="btn" type="button">เปลี่ยนผู้เล่น</button>
     </div>
   </div>
   <div id="tiers"></div>
@@ -705,10 +712,12 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     return st;
   }
 
-  function stars(blocks, par) {
-    if (blocks <= par) return 3;
-    if (blocks <= par + Math.max(2, Math.ceil(par * 0.35))) return 2;
-    return 1;
+  // ระดับกลาง/ยากให้เผื่อบล็อกเพิ่มอีก 2 บล็อกก็ยังได้ 3 ดาว
+  function threeLimit(par, tier) { return par + (tier === 'medium' || tier === 'hard' ? 2 : 0); }
+  function stars(blocks, par, tier) {
+    if (blocks <= threeLimit(par, tier)) return 3;
+    var two = tier === 'easy' ? Math.max(2, Math.ceil(par * 0.35)) : Math.max(4, Math.ceil(par * 0.8));
+    return blocks <= par + two ? 2 : 1;
   }
 
   /* ---------- โปรแกรมเฉลย (ใช้คำนวณ par และทดสอบ) ---------- */
@@ -979,7 +988,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       },
       {
         id: 'h5', title: 'สุดยอดนักอัลกอริทึม', limit: 7,
-        story: 'ด่านสุดท้าย: เขาวงกตใหญ่ที่สุด ใช้อัลกอริทึมสั้นที่สุดเท่าที่ทำได้',
+        story: 'เขาวงกตใหญ่ขึ้น ใช้อัลกอริทึมให้สั้นที่สุดเท่าที่ทำได้',
         hints: ['มีโปรแกรมแค่ 6 บล็อกที่ผ่านได้ทุกแผนที่ ลองตัดบล็อกที่ไม่จำเป็นออก'],
         maze: { n: 7, energy: 4, seeds: [5, 6, 7] },
         ref: leftHand()
@@ -1022,7 +1031,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       {
         id: 'h11', title: 'ทางคดเคี้ยวยาวพิเศษ', limit: 6,
         story: 'ทางเดินเส้นเดียวที่ยาวมาก มีคริสตัลระหว่างทาง ใช้โปรแกรมให้สั้นที่สุด',
-        hints: ['ใช้อัลกอริทึมเดียวกับด่านทางคดเคี้ยวสุ่ม แต่ลดบล็อกให้เหลือหก'],
+        hints: ['ใช้อัลกอริทึมเดียวกับด่านทางคดเคี้ยวสุ่ม แต่ใช้บล็อกให้กระชับขึ้น'],
         maze: { kind: 'path', n: 7, energy: 3, seeds: [61, 62, 63] },
         ref: pathFollow()
       },
@@ -1036,26 +1045,66 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       {
         id: 'h13', title: 'เขาวงกตขนาดใหญ่', limit: 7,
         story: 'เขาวงกตใหญ่ คริสตัลเยอะ และมีเวลาให้โบโบ้เดินนานขึ้น',
-        hints: ['อัลกอริทึมเดิม แต่บล็อกต้องไม่เกินเจ็ดบล็อก'],
+        hints: ['อัลกอริทึมเดิม แต่ใช้บล็อกให้กระชับ ไม่เกินเก้าบล็อก'],
         maze: { n: 7, energy: 5, seeds: [81, 82, 83] },
         ref: leftHand()
       },
       {
         id: 'h14', title: 'กฎสั้นที่สุด', limit: 6,
-        story: 'แผนที่ทดสอบ 4 แผนที่ เริ่มต้นแต่ละที่ไม่เหมือนกัน ใช้บล็อกเท่าที่จำเป็นเท่านั้น',
+        story: 'แผนที่ทดสอบ 3 แผนที่ เริ่มต้นแต่ละที่ไม่เหมือนกัน ใช้บล็อกเท่าที่จำเป็นเท่านั้น',
         hints: ['ตัดบล็อกที่ซ้ำซ้อนออก “เลี้ยวซ้ายถ้าซ้ายว่าง” กับ “เดินถ้าหน้าว่างไม่งั้นเลี้ยวขวา” ก็พอ'],
         maze: { n: 6, energy: 3, randomStart: true, seeds: [91, 92, 93, 94] },
         ref: leftHand()
       },
       {
         id: 'h15', title: 'ราชันแห่งเขาวงกต', limit: 6,
-        story: 'ด่านสุดท้าย! เขาวงกต 17×17 พร้อมคริสตัลหกก้อน ต้องผ่านห้าแผนที่ทดสอบด้วยโปรแกรมที่สั้นที่สุด',
+        story: 'ด่านสุดท้าย! เขาวงกต 15×15 พร้อมคริสตัลสี่ก้อน ต้องผ่านสามแผนที่ทดสอบ ซึ่งแต่ละแผนที่เริ่มต้นไม่เหมือนกัน',
         hints: ['ถ้าอัลกอริทึมถูกต้อง ไม่ว่าแผนที่จะใหญ่ขนาดไหนก็ผ่าน'],
         maze: { n: 8, energy: 6, randomStart: true, seeds: [1, 2, 3, 4, 5] },
         ref: leftHand()
       }
     ]
   };
+
+  /* ---------- ปรับความยาก (ม.ต้น/ม.ปลาย ให้ง่ายลง): เพิ่มบล็อกที่ใช้ได้ ลดขนาดเขาวงกต ลดจำนวนแผนที่ทดสอบ ---------- */
+  var TUNE = {
+    m1: { limit: 9 }, m2: { limit: 8 }, m3: { limit: 10 }, m4: { limit: 12 }, m5: { limit: 15 }, m6: { limit: 14 },
+    m7: { limit: 9 }, m8: { limit: 8 }, m9: { limit: 15 }, m10: { limit: 10 }, m11: { limit: 17 }, m12: { limit: 15 },
+    m13: { limit: 15 }, m14: { limit: 11 }, m15: { limit: 12 }, m16: { limit: 17 },
+    h2: { limit: 10 },
+    h3: { limit: 10, maze: { n: 4, energy: 1, seeds: [111, 222, 333] } },
+    h4: { limit: 9, maze: { n: 5, energy: 2, seeds: [11, 22, 33] } },
+    h5: { limit: 9, maze: { n: 6, energy: 3, seeds: [5, 6, 7] } },
+    h7: { limit: 7 }, h8: { limit: 8 }, h9: { limit: 10 },
+    h10: { limit: 9, maze: { n: 4, energy: 3, seeds: [51, 52, 53] } },
+    h11: { limit: 8, maze: { kind: 'path', n: 6, energy: 3, seeds: [61, 62, 63] } },
+    h12: { limit: 9, maze: { n: 5, energy: 2, randomStart: true, seeds: [71, 72, 73] } },
+    h13: { limit: 9, maze: { n: 6, energy: 3, seeds: [81, 82, 83] } },
+    h14: { limit: 8, maze: { n: 5, energy: 2, randomStart: true, seeds: [91, 92, 93] } },
+    h15: { limit: 8, maze: { n: 7, energy: 4, randomStart: true, seeds: [1, 2, 3] } }
+  };
+  var LH_HINT = 'โครงโปรแกรม: วนซ้ำขณะที่ ภารกิจยังไม่สำเร็จ { ถ้า ด้านซ้ายว่าง { เลี้ยวซ้าย } แล้วต่อด้วย ถ้า…ไม่งั้น ข้างหน้าว่าง { เดินหน้า } ไม่งั้น { เลี้ยวขวา } }';
+  var EXTRA_HINT = {
+    h1: LH_HINT, h2: LH_HINT, h3: LH_HINT,
+    h6: 'โครงโปรแกรม: วนซ้ำขณะที่ ภารกิจยังไม่สำเร็จ { ถ้า ข้างหน้าว่าง { เดินหน้า } ไม่งั้น { ถ้า ด้านซ้ายว่าง { เลี้ยวซ้าย } ไม่งั้น { เลี้ยวขวา } } }',
+    h7: 'โครงโปรแกรม: วนซ้ำขณะที่ ภารกิจยังไม่สำเร็จ { ถ้า ข้างหน้าว่าง { เดินหน้า } ไม่งั้น { เลี้ยวขวา } }',
+    h8: 'โครงโปรแกรม: วนซ้ำขณะที่ ภารกิจยังไม่สำเร็จ { ถ้า ข้างหน้าว่าง { เดินหน้า } ไม่งั้น { เลี้ยวซ้าย, เลี้ยวซ้าย } }',
+    h9: 'โครงโปรแกรม: ทำซ้ำ 4 ครั้ง { วนซ้ำขณะที่ ข้างหน้าว่าง { เดินหน้า }, เลี้ยวซ้าย, เลี้ยวซ้าย, วนซ้ำขณะที่ ด้านซ้ายเป็นกำแพง { เดินหน้า }, เลี้ยวขวา }'
+  };
+  ['easy', 'medium', 'hard'].forEach(function (t) {
+    LEVELS[t].forEach(function (lv) {
+      var o = TUNE[lv.id]; if (o) { for (var k in o) lv[k] = o[k]; }
+      if (EXTRA_HINT[lv.id]) lv.hints = lv.hints.concat([EXTRA_HINT[lv.id]]);
+    });
+  });
+  // เรียงลำดับด่านใหม่ให้ไล่จากง่ายไปยาก (รหัสด่านเดิมไม่เปลี่ยน คะแนนเก่ายังอยู่)
+  var ORDER = {
+    medium: ['m1', 'm7', 'm2', 'm3', 'm8', 'm6', 'm5', 'm12', 'm14', 'm4', 'm9', 'm13', 'm11', 'm15', 'm10', 'm16'],
+    hard: ['h7', 'h8', 'h6', 'h1', 'h2', 'h3', 'h9', 'h10', 'h4', 'h11', 'h12', 'h5', 'h13', 'h14', 'h15']
+  };
+  ['medium', 'hard'].forEach(function (t) {
+    LEVELS[t] = ORDER[t].map(function (id) { return LEVELS[t].filter(function (l) { return l.id === id; })[0]; });
+  });
 
   var TIERS = {
     easy: { key: 'easy', name: 'นักบินฝึกหัด', grade: 'ประถม', desc: 'สั่งโบโบ้เดินทีละช่องด้วยลูกศร ฝึกคิดเป็นลำดับขั้นตอน', skills: 'ลำดับคำสั่ง · ดีบั๊ก' },
@@ -1074,7 +1123,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   var api = {
     DIRS: DIRS, COND: COND, LEVELS: LEVELS, TIERS: TIERS, MAX_EXEC: MAX_EXEC,
     parseGrid: parseGrid, makeMaze: makeMaze, buildMap: buildMap, bfsPar: bfsPar, countBlocks: countBlocks,
-    newState: newState, doCmd: doCmd, evalCond: evalCond, run: run, simulate: simulate, stars: stars, levelPar: levelPar, leftHand: leftHand
+    newState: newState, doCmd: doCmd, evalCond: evalCond, run: run, simulate: simulate, stars: stars, threeLimit: threeLimit, levelPar: levelPar, leftHand: leftHand
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RobotCore = api;
@@ -1137,8 +1186,9 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   /* ---------- สถานะ ---------- */
   var KEY = 'robotMission.v1';
   var store = { name: '', stars: {}, url: '', queue: [], machine: '' };
-  try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && typeof o === 'object') { store.name = o.name || ''; store.stars = o.stars || {}; store.url = o.url || ''; store.queue = Array.isArray(o.queue) ? o.queue : []; store.machine = o.machine || ''; } } } catch (e) { }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { } }
+  // ชื่อและดาวไม่ถูกจำข้ามการรีเฟรช: ทุกครั้งที่เปิด/รีหน้า คือผู้เล่นคนใหม่ (จำเฉพาะค่าตั้งค่า คิวส่งคะแนน และรหัสเครื่อง)
+  try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && typeof o === 'object') { store.url = o.url || ''; store.queue = Array.isArray(o.queue) ? o.queue : []; store.machine = o.machine || ''; } } } catch (e) { }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ url: store.url, queue: store.queue, machine: store.machine })); } catch (e) { } }
 
   var cur = {
     tier: null, idx: 0, level: null, program: [], active: null, history: [], map: null, maps: null, par: 0,
@@ -1264,6 +1314,21 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   function totalStars() { var s = 0; for (var k in store.stars) s += store.stars[k]; return s; }
   function maxStars() { var n = 0; ['easy', 'medium', 'hard'].forEach(function (t) { n += C.LEVELS[t].length * 3; }); return n; }
 
+  var nameWarned = false;
+  function tryStart(key, i) {
+    if (!store.name.trim() && !nameWarned) {
+      nameWarned = true;
+      var hint = $('nameHint'); hint.textContent = 'พิมพ์ชื่อก่อนนะ ถ้าไม่ใส่ชื่อ คะแนนจะไม่ขึ้นตารางอันดับ (กดเลือกด่านอีกครั้งเพื่อเล่นโดยไม่ใส่ชื่อ)';
+      var inp = $('playerName'); inp.classList.remove('need'); void inp.offsetWidth; inp.classList.add('need'); inp.focus();
+      return;
+    }
+    startLevel(key, i);
+  }
+  function newPlayer() {
+    store.name = ''; store.stars = {}; nameWarned = false;
+    renderHome(); $('nameHint').textContent = ''; $('playerName').focus();
+  }
+
   function renderHome() {
     var wrap = $('tiers'); wrap.innerHTML = '';
     ['easy', 'medium', 'hard'].forEach(function (key) {
@@ -1273,7 +1338,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       C.LEVELS[key].forEach(function (lv, i) {
         var b = h('button', 'lvl', '<span class="n">' + (i + 1) + '</span><span class="s">' + starRow(store.stars[lv.id] || 0) + '</span>');
         b.title = lv.title; b.setAttribute('aria-label', 'ด่าน ' + (i + 1) + ' ' + lv.title);
-        b.onclick = function () { audio(); playSfx('click'); startLevel(key, i); };
+        b.onclick = function () { audio(); playSfx('click'); tryStart(key, i); };
         grid.appendChild(b);
       });
       card.appendChild(grid);
@@ -1281,7 +1346,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       wrap.appendChild(card);
     });
     $('totStars').textContent = totalStars() + ' / ' + maxStars();
-    $('playerName').value = store.name;
+    $('playerName').value = store.name; if (store.name.trim()) $('nameHint').textContent = '';
   }
 
   /* ---------- เริ่มด่าน ---------- */
@@ -1381,7 +1446,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     var meter = $('meter');
     meter.classList.toggle('full', !!lim && n >= lim);
     $('meterFill').style.width = lim ? Math.min(100, n / lim * 100) + '%' : Math.min(100, n / Math.max(1, cur.par * 2) * 100) + '%';
-    $('goalLine').textContent = '3 ดาว: ใช้ไม่เกิน ' + cur.par + ' บล็อก';
+    $('goalLine').textContent = '3 ดาว: ใช้ไม่เกิน ' + C.threeLimit(cur.par, cur.tier) + ' บล็อก';
     var tw = cur.total ? ('เก็บคริสตัล ' + cur.total + ' ก้อน แล้วไปที่ยาน') : 'พาโบโบ้ไปที่ยาน';
     $('goalText').textContent = tw;
     $('activeLine').textContent = describeActive();
@@ -1757,7 +1822,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
         }
       }
     }
-    var n = C.stars(blocks, cur.par), prev = store.stars[lv.id] || 0;
+    var n = C.stars(blocks, cur.par, cur.tier), prev = store.stars[lv.id] || 0;
     if (n > prev) { store.stars[lv.id] = n; save(); submitScore(lv, n, blocks); }
     playSfx('win');
     var body = cur.robotEl.querySelector('.rbody'); body.classList.add('hop');
@@ -1776,7 +1841,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   function showWin(n, blocks) {
     var tiers = ['easy', 'medium', 'hard'], list = C.LEVELS[cur.tier], hasNext = cur.idx + 1 < list.length, nextTier = null;
     if (!hasNext) { var ti = tiers.indexOf(cur.tier); if (ti < 2) nextTier = tiers[ti + 1]; }
-    var msg = n === 3 ? 'ยอดเยี่ยม! ใช้บล็อกน้อยที่สุดแล้ว' : 'ลองทำให้เหลือไม่เกิน ' + cur.par + ' บล็อกเพื่อรับ 3 ดาว';
+    var msg = n === 3 ? 'ยอดเยี่ยม! ใช้บล็อกน้อยที่สุดแล้ว' : 'ลองทำให้เหลือไม่เกิน ' + C.threeLimit(cur.par, cur.tier) + ' บล็อกเพื่อรับ 3 ดาว';
     var multi = cur.maps && cur.maps.length > 1 ? '<p>ผ่านครบทั้ง ' + cur.maps.length + ' แผนที่ทดสอบ</p>' : '';
     var m = $('modal'); m.classList.remove('hidden');
     m.innerHTML = '<div class="mbox" role="dialog" aria-modal="true"><h3>ภารกิจสำเร็จ!</h3><div class="bigstars">' + starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3) + '</div><p>ใช้ ' + blocks + ' บล็อก</p>' + multi + '<p>' + msg + '</p><div class="macts"></div></div>';
@@ -1992,7 +2057,8 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   $('soundBtn').onclick = function () {
     soundOn = !soundOn; $('soundBtn').innerHTML = ic(soundOn ? 'sound' : 'mute'); if (soundOn) { audio(); playSfx('click'); }
   };
-  $('playerName').addEventListener('input', function (e) { store.name = e.target.value.slice(0, 30); save(); });
+  $('playerName').addEventListener('input', function (e) { store.name = e.target.value.slice(0, 30); if (store.name.trim()) $('nameHint').textContent = ''; });
+  $('newPlayerBtn').onclick = newPlayer;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) closeModal(); });
   $('progWrap').addEventListener('click', function (e) {
     if (cur.running) return;
