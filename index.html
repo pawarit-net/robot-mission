@@ -110,11 +110,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 @keyframes launch{to{transform:translateY(-320%) scale(1.2);opacity:0}}
 .holesvg{animation:spin 6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#robot{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:5;transition:transform var(--dur,.25s) cubic-bezier(.4,.1,.3,1);pointer-events:none}
-#robot.noanim,#robot.noanim .dirwrap{transition:none!important}
+#robot,.rbt{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:5;transition:transform var(--dur,.25s) cubic-bezier(.4,.1,.3,1);pointer-events:none}
+#robot.noanim,#robot.noanim .dirwrap,.rbt.noanim,.rbt.noanim .dirwrap{transition:none!important}
 .dirwrap{position:absolute;inset:0;transition:transform var(--dur,.25s) ease}
-.dir{position:absolute;left:50%;top:0;width:0;height:0;margin-left:calc(var(--cell)*-.11);
-  border-left:calc(var(--cell)*.11) solid transparent;border-right:calc(var(--cell)*.11) solid transparent;border-bottom:calc(var(--cell)*.17) solid var(--mint);filter:drop-shadow(0 0 4px var(--mint))}
+.dirwrap{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 7px var(--mint))}
+.dir{position:absolute;left:50%;top:-8%;width:calc(var(--cell)*.46);height:calc(var(--cell)*.34);margin-left:calc(var(--cell)*-.23);
+  background:linear-gradient(180deg,#B8FFE5,#33F0B0);clip-path:polygon(50% 0,100% 100%,50% 70%,0 100%);animation:nudge 1s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(-14%)}}
 .rbody{position:absolute;inset:calc(var(--cell)*.1);animation:idle 2.2s ease-in-out infinite}
 @keyframes idle{50%{transform:translateY(-4%)}}
 .rbody.bump{animation:bump .4s ease-out}
@@ -227,6 +229,45 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .medal.m3{background:linear-gradient(135deg,#FFD0A0,#C9803A)}
 .lb tr.top td{font-size:20px;font-weight:700;color:var(--crystal)}
 
+/* ---------- ห้องทดลองเงื่อนไข ---------- */
+.mbox.lab{max-width:980px;max-height:94vh;overflow:auto;text-align:left;padding:22px 24px}
+.mbox.lab h3{text-align:center;font-size:30px}
+.mbox.lab h4{margin:16px 0 6px;font-size:18px}
+.mbox.lab .sub{text-align:center;margin:2px 0 12px}
+.labgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
+#labHost{background:rgba(4,7,34,.55);border:1px solid var(--line);border-radius:16px;padding:10px;display:grid;place-items:center}
+#labBoard{position:relative;display:grid;--cell:40px;user-select:none}
+.labctl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.labctl .btn{padding:8px 12px;font-size:15px}
+.cell.s-ok::after,.cell.s-no::after{position:absolute;inset:0;z-index:4;display:grid;place-items:center;font-weight:700;font-size:calc(var(--cell)*.55);text-shadow:0 0 6px #000,0 0 10px currentColor;pointer-events:none}
+.cell.s-ok::after{content:"\2713";color:var(--mint)}
+.cell.s-no::after{content:"\2715";color:var(--pink)}
+.cell.hl{outline:3px solid var(--amber);outline-offset:-3px;border-radius:8px;animation:hlp .8s ease-in-out infinite alternate;z-index:3}
+@keyframes hlp{from{box-shadow:0 0 0 rgba(255,185,56,0)}to{box-shadow:0 0 14px rgba(255,185,56,.9)}}
+#labConds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.crow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:12px;padding:7px 12px;font-size:16px;font-weight:600}
+.crow:hover{background:rgba(255,255,255,.13)}
+.crow.sel{border-color:var(--amber);background:rgba(255,185,56,.12)}
+.crow .lab{flex:1}
+.lamp{width:18px;height:18px;border-radius:50%;background:#555;flex:none}
+.crow.t .lamp{background:var(--mint);box-shadow:0 0 10px var(--mint)}
+.crow.f .lamp{background:var(--pink);box-shadow:0 0 8px rgba(255,92,154,.7)}
+.crow .tf{min-width:3em;text-align:right;font-size:14px}
+.crow.t .tf{color:var(--mint)} .crow.f .tf{color:var(--pink)}
+#labExplain{margin-top:10px;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px}
+#labExplain b{color:var(--amber)}
+.labpre{display:flex;flex-wrap:wrap;gap:8px}
+.labpre .btn{font-size:15px;padding:7px 12px}
+.blkinfo{font-size:14px;color:var(--mute);margin:4px 0 8px;display:grid;gap:2px}
+.blkinfo b{color:var(--ink)}
+#labCode{margin-top:10px;background:rgba(4,7,34,.55);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:15px;min-height:40px}
+.pl{display:flex;align-items:center;gap:8px;padding:2px 8px;border-radius:8px;border-left:4px solid transparent}
+.pl.on{background:rgba(255,255,255,.16);border-left-color:#fff;font-weight:600}
+.pl .rs{font-size:12px;padding:0 8px;border-radius:999px;background:#fff;color:#111;display:none}
+.pl .rs.t{display:inline-block;color:#067a3a} .pl .rs.f{display:inline-block;color:#b3123f}
+#labMsg{margin-top:8px;min-height:44px;font-size:15px;color:var(--ink)}
+@media (max-width:820px){.labgrid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -320,6 +361,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
         <button id="resetBtn" class="btn" type="button"></button>
         <button id="shuffleBtn" class="btn hidden" type="button"></button>
         <button id="hintBtn" class="btn" type="button"></button>
+        <button id="labBtn" class="btn hidden" type="button"></button>
         <span class="hintbox" id="hintText" aria-live="polite"></span>
       </div>
     </div>
@@ -1022,7 +1064,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   var api = {
     DIRS: DIRS, COND: COND, LEVELS: LEVELS, TIERS: TIERS, MAX_EXEC: MAX_EXEC,
     parseGrid: parseGrid, makeMaze: makeMaze, buildMap: buildMap, bfsPar: bfsPar, countBlocks: countBlocks,
-    newState: newState, run: run, simulate: simulate, stars: stars, levelPar: levelPar, leftHand: leftHand
+    newState: newState, doCmd: doCmd, evalCond: evalCond, run: run, simulate: simulate, stars: stars, levelPar: levelPar, leftHand: leftHand
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RobotCore = api;
@@ -1224,7 +1266,9 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
         b.onclick = function () { audio(); playSfx('click'); startLevel(key, i); };
         grid.appendChild(b);
       });
-      card.appendChild(grid); wrap.appendChild(card);
+      card.appendChild(grid);
+      if (key === 'hard') { var lb = h('button', 'btn', ic('q') + ' ดูวิธีใช้เงื่อนไข'); lb.type = 'button'; lb.onclick = function () { audio(); showLab(); }; card.appendChild(lb); }
+      wrap.appendChild(card);
     });
     $('totStars').textContent = totalStars() + ' / ' + maxStars();
     $('playerName').value = store.name;
@@ -1252,6 +1296,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     var chip = $('lvChip'); chip.textContent = C.TIERS[tier].grade; chip.className = 'chip tier-' + tier;
     chip.style.background = 'var(--tc)';
     $('shuffleBtn').classList.toggle('hidden', !(lv.maze && !lv.maze.fixed));
+    $('labBtn').classList.toggle('hidden', tier !== 'hard');
     closeModal();
     showScreen('play');
     buildPalette(); renderProgram(); renderBoard(); updateCounters(); renderSpeed(); setRunningUI(false);
@@ -1287,7 +1332,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
       var c = cells[e.y * m.w + e.x], cr = h('span', 'cry', '<svg class="g"><use href="#crystal"/></svg>');
       c.appendChild(cr); cur.crystalEls[e.x + ',' + e.y] = cr;
     });
-    var r = h('div', ''); r.id = 'robot';
+    var r = h('div', 'rbt'); r.id = 'robot';
     r.innerHTML = '<div class="dirwrap"><i class="dir"></i></div><div class="rbody"><svg class="g"><use href="#robot"/></svg></div>';
     b.appendChild(r);
     cur.robotEl = r; cur.angle = m.start.d * 90; cur.lastDir = m.start.d;
@@ -1713,7 +1758,7 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   }
 
   /* ---------- หน้าต่างผลลัพธ์ ---------- */
-  function closeModal() { clearInterval(boardTimer); $('modal').classList.add('hidden'); $('modal').innerHTML = ''; }
+  function closeModal() { lab.token++; lab.busy = false; clearInterval(boardTimer); $('modal').classList.add('hidden'); $('modal').innerHTML = ''; }
   function showWin(n, blocks) {
     var tiers = ['easy', 'medium', 'hard'], list = C.LEVELS[cur.tier], hasNext = cur.idx + 1 < list.length, nextTier = null;
     if (!hasNext) { var ti = tiers.indexOf(cur.tier); if (ti < 2) nextTier = tiers[ti + 1]; }
@@ -1751,8 +1796,174 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
     })(t0);
   }
 
+
+  /* ---------- ห้องทดลองเงื่อนไข ---------- */
+  var lab = { map: null, st: null, angle: 0, lastDir: 0, token: 0, sel: 'frontClear', cry: {}, cells: [], robot: null, busy: false, sp: 1 };
+  var COND_HELP = {
+    frontClear: ['ดูช่อง “ข้างหน้า” หุ่นยนต์ ถ้าไม่ใช่กำแพง เงื่อนไขนี้เป็นจริง', 'ถ้า ข้างหน้าว่าง → เดินหน้า'],
+    wallAhead: ['ตรงข้ามกับ “ข้างหน้าว่าง” ถ้ามีกำแพงขวางอยู่ข้างหน้า เป็นจริง', 'ถ้า ข้างหน้าเป็นกำแพง → เลี้ยวขวา'],
+    leftClear: ['ดูช่องทางซ้ายมือของหุ่นยนต์ (ซ้ายของหุ่น ไม่ใช่ซ้ายของจอ) ถ้าไม่ใช่กำแพง เป็นจริง', 'ถ้า ด้านซ้ายว่าง → เลี้ยวซ้าย'],
+    rightClear: ['ดูช่องทางขวามือของหุ่นยนต์ ถ้าไม่ใช่กำแพง เป็นจริง', 'ถ้า ด้านขวาว่าง → เลี้ยวขวา'],
+    wallLeft: ['ถ้าทางซ้ายมือเป็นกำแพง เป็นจริง ใช้บอกว่ายังเดินชิดกำแพงอยู่', 'วนซ้ำขณะที่ ด้านซ้ายเป็นกำแพง → เดินหน้า'],
+    wallRight: ['ถ้าทางขวามือเป็นกำแพง เป็นจริง', 'วนซ้ำขณะที่ ด้านขวาเป็นกำแพง → เดินหน้า'],
+    notDone: ['จริงตราบที่ภารกิจยังไม่เสร็จ คือยังเก็บคริสตัลไม่ครบ หรือยังไม่ถึงยาน เป็นเท็จเมื่อเก็บครบและอยู่ที่ยานแล้ว', 'วนซ้ำขณะที่ ภารกิจยังไม่สำเร็จ → …']
+  };
+  var COND_CELL = { frontClear: 'f', wallAhead: 'f', leftClear: 'l', wallLeft: 'l', rightClear: 'r', wallRight: 'r', notDone: 'g' };
+  function labCellOf(which) {
+    var st = lab.st, dd = which === 'f' ? st.d : which === 'l' ? (st.d + 3) % 4 : (st.d + 1) % 4;
+    return { x: st.x + C.DIRS[dd].dx, y: st.y + C.DIRS[dd].dy };
+  }
+  function labBuild() {
+    var m = C.makeMaze(3, 17, 1), b = $('labBoard');
+    lab.map = m; lab.st = C.newState(m); lab.cells = []; lab.cry = {};
+    b.innerHTML = ''; b.style.gridTemplateColumns = 'repeat(' + m.w + ',var(--cell))';
+    for (var y = 0; y < m.h; y++) for (var x = 0; x < m.w; x++) {
+      var t = m.grid[y][x], cell = h('div', 'cell');
+      if (t === 1) { cell.className = 'cell wall'; cell.innerHTML = '<svg class="g"><use href="#ast' + (((x * 7 + y * 13) % 3) + 1) + '"/></svg>'; }
+      else {
+        cell.className = 'cell floor' + ((x + y) % 2 ? ' alt' : '') + ((x === m.start.x && y === m.start.y) ? ' start' : '');
+        if (x === m.goal.x && y === m.goal.y) cell.appendChild(h('div', 'g goal', '<svg class="g"><use href="#rocket"/></svg>'));
+      }
+      b.appendChild(cell); lab.cells.push(cell);
+    }
+    m.energy.forEach(function (e) {
+      var cr = h('span', 'cry', '<svg class="g"><use href="#crystal"/></svg>');
+      lab.cells[e.y * m.w + e.x].appendChild(cr); lab.cry[e.x + ',' + e.y] = cr;
+    });
+    var r = h('div', 'rbt');
+    r.innerHTML = '<div class="dirwrap"><i class="dir"></i></div><div class="rbody"><svg class="g"><use href="#robot"/></svg></div>';
+    b.appendChild(r); lab.robot = r; lab.angle = m.start.d * 90; lab.lastDir = m.start.d;
+    labPlace(m.start.x, m.start.y, m.start.d, true);
+    labSense();
+  }
+  function labPlace(x, y, d, instant) {
+    var r = lab.robot; if (!r) return;
+    if (instant) r.classList.add('noanim');
+    var diff = (d - lab.lastDir + 4) % 4;
+    if (diff === 3) lab.angle -= 90; else if (diff === 1) lab.angle += 90; else if (diff === 2) lab.angle += 180;
+    lab.lastDir = d;
+    r.style.transform = 'translate(' + (x * 100) + '%,' + (y * 100) + '%)';
+    r.firstChild.style.transform = 'rotate(' + lab.angle + 'deg)';
+    if (instant) { void r.offsetWidth; r.classList.remove('noanim'); }
+  }
+  function labSense() {
+    var m = lab.map, i;
+    for (i = 0; i < lab.cells.length; i++) lab.cells[i].classList.remove('s-ok', 's-no', 'hl');
+    [['f', 'frontClear'], ['l', 'leftClear'], ['r', 'rightClear']].forEach(function (p) {
+      var c = labCellOf(p[0]);
+      if (c.x < 0 || c.y < 0 || c.x >= m.w || c.y >= m.h) return;
+      lab.cells[c.y * m.w + c.x].classList.add(C.evalCond(p[1], m, lab.st) ? 's-ok' : 's-no');
+    });
+    var w = COND_CELL[lab.sel];
+    if (w === 'g') {
+      lab.cells[m.goal.y * m.w + m.goal.x].classList.add('hl');
+      Object.keys(lab.st.left).forEach(function (k) { var p = k.split(','); lab.cells[p[1] * m.w + +p[0]].classList.add('hl'); });
+    } else { var cc = labCellOf(w); lab.cells[cc.y * m.w + cc.x].classList.add('hl'); }
+    var rows = document.querySelectorAll('#labConds .crow');
+    for (i = 0; i < rows.length; i++) {
+      var k = rows[i].dataset.c, v = C.evalCond(k, m, lab.st);
+      rows[i].classList.toggle('t', v); rows[i].classList.toggle('f', !v); rows[i].classList.toggle('sel', k === lab.sel);
+      rows[i].querySelector('.tf').textContent = v ? 'จริง' : 'เท็จ';
+    }
+    var hp = COND_HELP[lab.sel];
+    $('labExplain').innerHTML = '<b>' + esc(C.COND[lab.sel]) + '</b>: ' + esc(hp[0]) + '<br>ตัวอย่างการใช้: <b>' + esc(hp[1]) + '</b>';
+  }
+  function labApply(ev) {
+    labPlace(ev.x, ev.y, ev.d);
+    var body = lab.robot.querySelector('.rbody');
+    if (ev.crash) {
+      var dd = C.DIRS[ev.d];
+      body.style.setProperty('--bx', (dd.dx * 30) + '%'); body.style.setProperty('--by', (dd.dy * 30) + '%');
+      body.classList.remove('bump'); void body.offsetWidth; body.classList.add('bump'); playSfx('crash');
+    } else if (ev.turn) playSfx('turn'); else playSfx('step');
+    if (ev.collected) { var cr = lab.cry[ev.collected]; if (cr) cr.classList.add('got'); playSfx('collect'); }
+    labSense();
+  }
+  function labDo(t) {
+    if (lab.busy || !lab.st) return;
+    var ev = C.doCmd({ t: t }, lab.map, lab.st);
+    lab.st.done = null;
+    labApply(ev);
+    $('labMsg').textContent = ev.crash ? 'ชนกำแพง! ดูว่าเงื่อนไข “ข้างหน้าว่าง” เป็นเท็จอยู่ แปลว่าห้ามเดินหน้า' : '';
+  }
+  var LAB_PRESETS = [
+    { name: 'ถ้า…', desc: 'ทำซ้ำ 5 รอบ: ถ้าข้างหน้าว่าง ให้เดินหน้า', prog: function () { return [{ t: 'repeat', n: 5, body: [{ t: 'if', c: 'frontClear', body: [{ t: 'fwd' }], els: [], hasElse: false }] }]; } },
+    { name: 'ถ้า…ไม่งั้น', desc: 'ทำซ้ำ 6 รอบ: ถ้าข้างหน้าว่างเดินหน้า ไม่งั้นเลี้ยวขวา', prog: function () { return [{ t: 'repeat', n: 6, body: [{ t: 'if', c: 'frontClear', body: [{ t: 'fwd' }], els: [{ t: 'right' }], hasElse: true }] }]; } },
+    { name: 'วนซ้ำขณะที่', desc: 'ตราบที่ข้างหน้าว่าง ให้เดินหน้า', prog: function () { return [{ t: 'while', c: 'frontClear', body: [{ t: 'fwd' }] }]; } },
+    { name: 'กฎมือซ้าย', desc: 'ทุกเงื่อนไขรวมกัน เดินออกจากเขาวงกต', prog: function () { return C.leftHand(); } }
+  ];
+  function labLines(nodes, depth, out) {
+    nodes.forEach(function (n) {
+      var txt = n.t === 'fwd' ? 'เดินหน้า' : n.t === 'left' ? 'เลี้ยวซ้าย' : n.t === 'right' ? 'เลี้ยวขวา' :
+        n.t === 'repeat' ? 'ทำซ้ำ ' + n.n + ' ครั้ง' : n.t === 'if' ? 'ถ้า ' + C.COND[n.c] : 'วนซ้ำขณะที่ ' + C.COND[n.c];
+      out.push({ id: n.id, text: txt, depth: depth, res: n.t === 'if' || n.t === 'while' });
+      if (n.body) labLines(n.body, depth + 1, out);
+      if (n.t === 'if' && n.hasElse) { out.push({ text: 'ไม่งั้น', depth: depth }); labLines(n.els, depth + 1, out); }
+    });
+    return out;
+  }
+  function labIds(nodes) { nodes.forEach(function (n) { n.id = 'L' + (idc++); if (n.body) labIds(n.body); if (n.els) labIds(n.els); }); return nodes; }
+  function labSleep(ms) { return sleep(ms * lab.sp); }
+  function labRun(p) {
+    var tok = ++lab.token;
+    labBuild(); lab.busy = true;
+    var prog = labIds(p.prog());
+    var box = $('labCode'); box.innerHTML = '';
+    labLines(prog, 0, []).forEach(function (l) {
+      var d = h('div', 'pl'); if (l.id) d.dataset.id = l.id; d.style.paddingLeft = (8 + l.depth * 22) + 'px';
+      d.appendChild(h('span', '', esc(l.text))); if (l.res) d.appendChild(h('span', 'rs')); box.appendChild(d);
+    });
+    $('labMsg').textContent = 'กำลังรัน: ' + p.name + ' — ' + p.desc;
+    var gen = C.run(prog, lab.map, lab.st);
+    function line(id) { var o = box.querySelectorAll('.pl.on'); for (var i = 0; i < o.length; i++) o[i].classList.remove('on'); var e = id && box.querySelector('.pl[data-id="' + id + '"]'); if (e) e.classList.add('on'); return e; }
+    (async function () {
+      while (true) {
+        var r = gen.next(); if (r.done) break;
+        if (tok !== lab.token) return;
+        var ev = r.value, el = ev.node && line(ev.node.id);
+        if (ev.k === 'cmd') { labApply(ev); await labSleep(520); }
+        else if (ev.k === 'cond') {
+          labSense();
+          var rs = el && el.querySelector('.rs'); if (rs) { rs.className = 'rs ' + (ev.result ? 't' : 'f'); rs.textContent = ev.result ? '✓ จริง' : '✗ เท็จ'; }
+          var n = ev.node;
+          $('labMsg').textContent = 'ตรวจ “' + C.COND[n.c] + '” → ' + (ev.result ? 'จริง' : 'เท็จ') + ' ' +
+            (n.t === 'if' ? (ev.result ? 'จึงทำบล็อกข้างใน' : (n.hasElse ? 'จึงข้ามไปทำส่วน “ไม่งั้น”' : 'จึงข้ามไป ไม่ทำอะไร')) : (ev.result ? 'จึงทำบล็อกข้างในแล้ววนกลับมาตรวจใหม่' : 'จึงออกจากลูป'));
+          await labSleep(900);
+        } else await labSleep(250);
+      }
+      if (tok !== lab.token) return;
+      line(null); lab.busy = false; lab.st.done = null; labSense();
+      $('labMsg').textContent = 'จบการสาธิต ลองกดสั่งหุ่นเองหรือเลือกตัวอย่างอื่นต่อได้เลย';
+    })();
+  }
+  function showLab() {
+    var m = $('modal'); m.classList.remove('hidden');
+    m.innerHTML = '<div class="mbox lab" role="dialog" aria-modal="true"><h3>ห้องทดลองเงื่อนไข</h3>' +
+      '<p class="sub">สั่งโบโบ้ด้วยปุ่ม แล้วดูว่าเงื่อนไขแต่ละอันเปลี่ยนเป็น จริง หรือ เท็จ</p>' +
+      '<div class="labgrid"><div><div id="labHost"><div id="labBoard"></div></div>' +
+      '<div class="labctl"><button class="btn" id="lbF" type="button">เดินหน้า</button><button class="btn" id="lbL" type="button">เลี้ยวซ้าย</button><button class="btn" id="lbR" type="button">เลี้ยวขวา</button><button class="btn" id="lbX" type="button">เริ่มใหม่</button></div></div>' +
+      '<div><p style="margin:0 0 6px">กดที่เงื่อนไขเพื่อดูว่ามันตรวจช่องไหน (ช่องส้มกะพริบ)</p><ul id="labConds"></ul><div id="labExplain"></div></div></div>' +
+      '<h4>ดูโปรแกรมตัวอย่างทำงาน</h4>' +
+      '<div class="blkinfo"><span><b>ถ้า</b> เงื่อนไขจริง → ทำบล็อกข้างใน เท็จ → ข้ามไป</span><span><b>ถ้า…ไม่งั้น</b> จริง → ทำข้างใน เท็จ → ทำส่วนไม่งั้นแทน</span><span><b>วนซ้ำขณะที่</b> ตรวจก่อนทุกรอบ จริง → ทำต่อ เท็จ → ออกจากลูป</span></div>' +
+      '<div class="labpre" id="labPre"></div><div id="labCode"></div><div id="labMsg" aria-live="polite"></div>' +
+      '<div class="macts"><button class="btn" id="labClose" type="button">ปิด</button></div></div>';
+    var ul = $('labConds');
+    Object.keys(C.COND).forEach(function (k) {
+      var li = h('li'), b = h('button', 'crow', '<span class="lamp"></span><span class="lab">' + esc(C.COND[k]) + '</span><span class="tf"></span>');
+      b.type = 'button'; b.dataset.c = k; b.onclick = function () { lab.sel = k; labSense(); };
+      li.appendChild(b); ul.appendChild(li);
+    });
+    var pre = $('labPre');
+    LAB_PRESETS.forEach(function (p) { var b = h('button', 'btn', esc(p.name)); b.type = 'button'; b.title = p.desc; b.onclick = function () { labRun(p); }; pre.appendChild(b); });
+    $('lbF').onclick = function () { labDo('fwd'); }; $('lbL').onclick = function () { labDo('left'); }; $('lbR').onclick = function () { labDo('right'); };
+    $('lbX').onclick = function () { lab.token++; lab.busy = false; $('labCode').innerHTML = ''; $('labMsg').textContent = ''; labBuild(); };
+    $('labClose').onclick = closeModal; $('labClose').focus();
+    lab.token++; lab.busy = false; lab.sel = 'frontClear'; labBuild();
+  }
+
   /* ---------- เชื่อมปุ่ม ---------- */
   $('backBtn').onclick = goHome;
+  $('labBtn').onclick = showLab;
   $('boardBtn').onclick = showBoard; $('cfgBtn').onclick = showConfig;
   $('runBtn').onclick = runProgram;
   $('undoBtn').onclick = undo;
@@ -1781,13 +1992,14 @@ window.ROBOT_CONFIG = { scoreUrl: "https://script.google.com/macros/s/AKfycbxMl8
   $('resetBtn').innerHTML = ic('reset') + ' วางโบโบ้ใหม่';
   $('shuffleBtn').innerHTML = ic('shuffle') + ' สุ่มแผนที่ใหม่';
   $('hintBtn').innerHTML = ic('bulb') + ' ใบ้';
+  $('labBtn').innerHTML = ic('q') + ' วิธีใช้เงื่อนไข';
   $('soundBtn').innerHTML = ic('sound');
   $('totIcon').innerHTML = starSvg(true);
 
   renderHome(); showScreen('home'); updateSync(); flush();
 
   // สำหรับทดสอบ
-  window.__game = { cur: cur, startLevel: startLevel, addTool: addTool, runProgram: runProgram, store: store };
+  window.__game = { lab: lab, showLab: showLab, cur: cur, startLevel: startLevel, addTool: addTool, runProgram: runProgram, store: store };
 })();
 
 </script>
